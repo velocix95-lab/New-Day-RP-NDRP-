@@ -1,0 +1,1165 @@
+#!/usr/bin/env python3
+"""
+New Day RP (NDRP) Website Server - Single Python File
+Run: python newdayrp.py
+Open: http://localhost:8000
+"""
+
+from http.server import HTTPServer, SimpleHTTPRequestHandler
+import json
+import datetime
+import os
+
+HTML_PAGE = r'''<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>New Day RP — FiveM Roleplay Community</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ======================== RESET & BASE ======================== */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#09090b;--bg2:#111113;--bg3:#18181b;--card:#1c1c1f;--card-hover:#232326;
+  --border:#27272a;--border2:#3f3f46;
+  --text:#fafafa;--text2:#a1a1aa;--text3:#71717a;--text4:#52525b;
+  --accent:#eab308;--accent2:#facc15;--accent-glow:rgba(234,179,8,.15);
+  --purple:#a855f7;--pink:#ec4899;--cyan:#06b6d4;--emerald:#10b981;
+  --orange:#f97316;--red:#ef4444;--yellow:#eab308;
+  --gradient:linear-gradient(135deg,#eab308,#f97316,#ef4444);
+  --gradient2:linear-gradient(135deg,#eab308,#06b6d4);
+  --shadow:0 1px 3px rgba(0,0,0,.3),0 1px 2px rgba(0,0,0,.2);
+  --shadow-lg:0 10px 40px rgba(0,0,0,.4);
+  --radius:12px;--radius-lg:20px;--radius-xl:24px;
+  --transition:all .3s cubic-bezier(.4,0,.2,1);
+  --font:'Inter',system-ui,-apple-system,sans-serif;
+  --mono:'JetBrains Mono',monospace;
+}
+.light{
+  --bg:#ffffff;--bg2:#f8f9fa;--bg3:#f1f3f5;--card:#ffffff;--card-hover:#f8f9fa;
+  --border:#e5e7eb;--border2:#d1d5db;
+  --text:#111827;--text2:#4b5563;--text3:#6b7280;--text4:#9ca3af;
+  --accent:#d97706;--accent2:#f59e0b;--accent-glow:rgba(217,119,6,.1);
+  --shadow:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.04);
+  --shadow-lg:0 10px 40px rgba(0,0,0,.08);
+}
+html{scroll-behavior:smooth;scroll-padding-top:80px}
+body{font-family:var(--font);background:var(--bg);color:var(--text);line-height:1.6;
+  transition:background .5s,color .5s;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+::selection{background:var(--accent);color:#fff}
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-track{background:var(--bg2)}
+::-webkit-scrollbar-thumb{background:var(--accent);border-radius:3px}
+img{max-width:100%;display:block}
+button{font-family:var(--font);cursor:pointer}
+a{color:inherit;text-decoration:none}
+
+/* ======================== ANIMATIONS ======================== */
+@keyframes fadeUp{from{opacity:0;transform:translateY(40px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes slideInLeft{from{opacity:0;transform:translateX(-40px)}to{opacity:1;transform:translateX(0)}}
+@keyframes slideInRight{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:translateX(0)}}
+@keyframes scaleIn{from{opacity:0;transform:scale(.8)}to{opacity:1;transform:scale(1)}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+@keyframes float2{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-8px) rotate(3deg)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes gradient{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+@keyframes shimmer{0%{transform:translateX(-100%)}100%{transform:translateX(200%)}}
+@keyframes typewriter{from{width:0}to{width:100%}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+@keyframes morphBlob{0%,100%{border-radius:60% 40% 30% 70%/60% 30% 70% 40%}25%{border-radius:30% 60% 70% 40%/50% 60% 30% 60%}50%{border-radius:50% 60% 30% 60%/30% 50% 70% 50%}75%{border-radius:60% 40% 60% 30%/40% 50% 60% 70%}}
+@keyframes ripple{to{transform:scale(4);opacity:0}}
+@keyframes dotPulse{0%,80%,100%{transform:scale(0)}40%{transform:scale(1)}}
+@keyframes slideUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes marquee{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@keyframes orbitSpin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+@keyframes glowPulse{0%,100%{box-shadow:0 0 20px rgba(234,179,8,.2)}50%{box-shadow:0 0 40px rgba(234,179,8,.4)}}
+@keyframes borderGlow{0%,100%{border-color:rgba(234,179,8,.3)}50%{border-color:rgba(234,179,8,.8)}}
+
+.reveal{opacity:0;transform:translateY(50px);transition:all .9s cubic-bezier(.16,1,.3,1)}
+.reveal.visible{opacity:1;transform:translateY(0)}
+.reveal-left{opacity:0;transform:translateX(-50px);transition:all .9s cubic-bezier(.16,1,.3,1)}
+.reveal-left.visible{opacity:1;transform:translateX(0)}
+.reveal-right{opacity:0;transform:translateX(50px);transition:all .9s cubic-bezier(.16,1,.3,1)}
+.reveal-right.visible{opacity:1;transform:translateX(0)}
+.reveal-scale{opacity:0;transform:scale(.85);transition:all .9s cubic-bezier(.16,1,.3,1)}
+.reveal-scale.visible{opacity:1;transform:scale(1)}
+.stagger-delay{transition-delay:var(--d,0ms)!important}
+
+/* ======================== NAVBAR ======================== */
+.navbar{position:fixed;top:0;left:0;right:0;z-index:1000;padding:0 24px;
+  transition:var(--transition);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
+.navbar.scrolled{background:rgba(9,9,11,.85);border-bottom:1px solid var(--border)}
+.light .navbar.scrolled{background:rgba(255,255,255,.85)}
+.nav-container{max-width:1200px;margin:0 auto;height:72px;display:flex;align-items:center;justify-content:space-between}
+.nav-logo{font-weight:800;font-size:20px;letter-spacing:-.5px;display:flex;align-items:center;gap:8px;transition:var(--transition)}
+.nav-logo:hover{opacity:.8}
+.logo-icon{width:36px;height:36px;border-radius:10px;background:var(--gradient);display:flex;align-items:center;justify-content:center;font-weight:900;color:#fff;font-size:16px}
+.nav-links{display:flex;align-items:center;gap:4px}
+.nav-link{position:relative;padding:8px 16px;font-size:14px;font-weight:500;color:var(--text3);
+  border:none;background:none;border-radius:8px;transition:var(--transition)}
+.nav-link:hover{color:var(--text);background:var(--accent-glow)}
+.nav-link.active{color:var(--accent2);background:var(--accent-glow)}
+.nav-link.active::after{content:'';position:absolute;bottom:4px;left:50%;transform:translateX(-50%);
+  width:16px;height:2px;background:var(--accent);border-radius:1px}
+.nav-right{display:flex;align-items:center;gap:12px}
+.theme-btn{width:40px;height:40px;border-radius:10px;border:1px solid var(--border);background:var(--card);
+  display:flex;align-items:center;justify-content:center;font-size:18px;transition:var(--transition)}
+.theme-btn:hover{border-color:var(--accent);background:var(--accent-glow);transform:rotate(20deg)}
+.nav-cta{padding:8px 20px;border-radius:8px;background:var(--accent);color:#fff;font-weight:600;
+  font-size:14px;border:none;transition:var(--transition)}
+.nav-cta:hover{background:var(--accent2);transform:translateY(-1px);box-shadow:0 4px 12px rgba(234,179,8,.4)}
+.hamburger{display:none;width:40px;height:40px;border:1px solid var(--border);border-radius:10px;
+  background:var(--card);flex-direction:column;align-items:center;justify-content:center;gap:5px;cursor:pointer}
+.hamburger span{display:block;width:18px;height:2px;background:var(--text);transition:var(--transition);border-radius:1px}
+.hamburger.open span:nth-child(1){transform:rotate(45deg) translate(2.5px,2.5px)}
+.hamburger.open span:nth-child(2){opacity:0;transform:scaleX(0)}
+.hamburger.open span:nth-child(3){transform:rotate(-45deg) translate(2.5px,-2.5px)}
+.mobile-nav{display:none;position:fixed;top:72px;left:0;right:0;bottom:0;background:var(--bg);
+  padding:24px;z-index:999;opacity:0;transform:translateY(-10px);transition:var(--transition)}
+.mobile-nav.open{opacity:1;transform:translateY(0)}
+.mobile-nav .nav-link{display:block;padding:16px 0;font-size:18px;border-bottom:1px solid var(--border)}
+
+/* ======================== HERO ======================== */
+.hero{min-height:100vh;display:flex;align-items:center;position:relative;overflow:hidden;padding:120px 24px 80px}
+.hero-bg{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.hero-gradient-orb{position:absolute;border-radius:50%;filter:blur(100px);opacity:.4;transition:opacity .5s}
+.hero-gradient-orb.o1{width:600px;height:600px;background:radial-gradient(circle,rgba(234,179,8,.3),transparent 70%);top:-10%;right:-5%;animation:float 8s ease-in-out infinite}
+.hero-gradient-orb.o2{width:500px;height:500px;background:radial-gradient(circle,rgba(249,115,22,.2),transparent 70%);bottom:-10%;left:-5%;animation:float 10s ease-in-out infinite 2s}
+.hero-gradient-orb.o3{width:400px;height:400px;background:radial-gradient(circle,rgba(239,68,68,.15),transparent 70%);top:40%;left:40%;animation:float 12s ease-in-out infinite 4s}
+.light .hero-gradient-orb{opacity:.2}
+.hero-grid{position:absolute;inset:0;background-image:
+  linear-gradient(rgba(234,179,8,.05) 1px,transparent 1px),
+  linear-gradient(90deg,rgba(234,179,8,.05) 1px,transparent 1px);
+  background-size:60px 60px;mask-image:radial-gradient(ellipse 60% 60% at 50% 50%,black,transparent)}
+.hero-container{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center;position:relative;z-index:2}
+.hero-content{animation:fadeUp .8s ease}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;padding:6px 16px 6px 8px;border-radius:100px;
+  background:var(--accent-glow);border:1px solid rgba(234,179,8,.2);font-size:13px;color:var(--accent2);
+  font-weight:500;margin-bottom:24px;animation:fadeUp .8s ease .1s both}
+.hero-badge .dot{width:8px;height:8px;border-radius:50%;background:var(--emerald);animation:pulse 2s infinite}
+.hero-badge .badge-text{display:flex;align-items:center;gap:6px}
+.hero-title{font-size:clamp(40px,5.5vw,72px);font-weight:900;line-height:1.05;letter-spacing:-2px;margin-bottom:24px;animation:fadeUp .8s ease .2s both}
+.hero-title .line{display:block}
+.hero-title .gradient-text{background:var(--gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-size:200% auto;animation:gradient 4s linear infinite}
+.hero-subtitle{font-size:18px;color:var(--text2);line-height:1.7;max-width:500px;margin-bottom:40px;animation:fadeUp .8s ease .3s both}
+.hero-actions{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:48px;animation:fadeUp .8s ease .4s both}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:14px 28px;border-radius:12px;font-weight:600;
+  font-size:15px;border:none;transition:var(--transition);position:relative;overflow:hidden}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:var(--accent2);transform:translateY(-2px);box-shadow:0 8px 25px rgba(234,179,8,.4)}
+.btn-primary:active{transform:scale(.97)}
+.btn-secondary{background:transparent;color:var(--text);border:1.5px solid var(--border)}
+.btn-secondary:hover{border-color:var(--accent);background:var(--accent-glow);transform:translateY(-2px)}
+.btn-ghost{background:transparent;color:var(--text2);padding:14px 16px}
+.btn-ghost:hover{color:var(--accent2)}
+.btn .arrow{transition:transform .3s}
+.btn:hover .arrow{transform:translateX(3px)}
+.hero-stats{display:flex;gap:40px;animation:fadeUp .8s ease .5s both}
+.hero-stat .stat-value{font-size:28px;font-weight:800;letter-spacing:-1px}
+.hero-stat .stat-value .accent{color:var(--accent2)}
+.hero-stat .stat-label{font-size:13px;color:var(--text3);margin-top:2px}
+.hero-visual{position:relative;display:flex;align-items:center;justify-content:center;animation:fadeUp .8s ease .3s both}
+.hero-visual-inner{position:relative;width:100%;max-width:480px;aspect-ratio:1}
+
+/* Code Card in Hero */
+.code-card{position:relative;width:100%;border-radius:var(--radius-xl);background:var(--card);
+  border:1px solid var(--border);overflow:hidden;box-shadow:var(--shadow-lg);transition:var(--transition)}
+.code-card:hover{border-color:var(--border2);transform:translateY(-4px)}
+.code-header{display:flex;align-items:center;gap:8px;padding:14px 20px;border-bottom:1px solid var(--border);background:var(--bg2)}
+.code-dot{width:12px;height:12px;border-radius:50%}
+.code-dot.red{background:#ff5f57}.code-dot.yellow{background:#febc2e}.code-dot.green{background:#28c840}
+.code-tab{margin-left:16px;font-size:12px;color:var(--text3);font-family:var(--mono);display:flex;align-items:center;gap:6px}
+.code-tab .file-icon{color:var(--accent2)}
+.code-body{padding:20px;font-family:var(--mono);font-size:13px;line-height:2;color:var(--text2)}
+.code-body .line{display:flex;gap:12px}
+.code-body .ln{color:var(--text4);min-width:24px;text-align:right;user-select:none}
+.code-body .kw{color:var(--purple)}
+.code-body .fn{color:#60a5fa}
+.code-body .str{color:var(--emerald)}
+.code-body .cm{color:var(--text4);font-style:italic}
+.code-body .op{color:var(--text3)}
+.code-body .var{color:var(--orange)}
+.code-body .num{color:var(--cyan)}
+.code-body .indent{padding-left:24px}
+
+/* Floating elements around code card */
+.float-el{position:absolute;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+  padding:10px 16px;box-shadow:var(--shadow);display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;
+  z-index:3;transition:var(--transition);cursor:default}
+.float-el:hover{border-color:var(--accent);transform:scale(1.05)!important}
+.float-el .el-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px}
+.float-el.fe1{top:-8px;right:-8px;animation:float 4s ease-in-out infinite}
+.float-el.fe1 .el-icon{background:rgba(59,130,246,.15)}
+.float-el.fe2{bottom:20%;left:-12px;animation:float2 5s ease-in-out infinite .5s}
+.float-el.fe2 .el-icon{background:rgba(239,68,68,.15)}
+.float-el.fe3{bottom:-8px;right:15%;animation:float 6s ease-in-out infinite 1s}
+.float-el.fe3 .el-icon{background:rgba(16,185,129,.15)}
+
+/* ======================== SECTION COMMON ======================== */
+.section{padding:120px 24px;transition:background .5s}
+.section.alt-bg{background:var(--bg2)}
+.section-container{max-width:1200px;margin:0 auto}
+.section-header{margin-bottom:64px}
+.section-header.center{text-align:center}
+.section-label{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;
+  color:var(--accent2);text-transform:uppercase;letter-spacing:2px;margin-bottom:12px}
+.section-label .label-line{width:24px;height:2px;background:var(--accent);border-radius:1px}
+.section-title{font-size:clamp(32px,4vw,48px);font-weight:800;letter-spacing:-1.5px;line-height:1.2}
+.section-title .gradient-text{background:var(--gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.section-subtitle{font-size:17px;color:var(--text2);max-width:600px;margin-top:16px;line-height:1.7}
+.section-header.center .section-subtitle{margin-left:auto;margin-right:auto}
+
+/* ======================== ABOUT ======================== */
+.about-grid{display:grid;grid-template-columns:5fr 7fr;gap:64px;align-items:center}
+.about-image-wrapper{position:relative}
+.about-image{width:100%;aspect-ratio:4/5;border-radius:var(--radius-xl);background:var(--bg3);
+  border:1px solid var(--border);overflow:hidden;position:relative;transition:var(--transition)}
+.about-image:hover{border-color:var(--accent);transform:scale(1.02)}
+.about-image-bg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
+.about-image-bg .morph{width:200px;height:200px;background:var(--gradient);border-radius:60% 40% 30% 70%/60% 30% 70% 40%;
+  animation:morphBlob 8s ease-in-out infinite;opacity:.2}
+.about-image-content{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:12px}
+.about-avatar{font-size:80px;filter:drop-shadow(0 8px 20px rgba(0,0,0,.3));transition:transform .5s}
+.about-image:hover .about-avatar{transform:scale(1.1) rotate(5deg)}
+.about-avatar-label{font-size:14px;color:var(--text3);font-weight:500}
+.about-decor{position:absolute;border-radius:var(--radius);background:var(--card);border:1px solid var(--border);
+  padding:12px 18px;box-shadow:var(--shadow);z-index:3;display:flex;align-items:center;gap:10px;font-size:13px;font-weight:600}
+.about-decor.d1{top:-16px;right:-16px;animation:float 4s ease-in-out infinite}
+.about-decor.d2{bottom:-16px;left:-16px;animation:float2 5s ease-in-out infinite 1s}
+.about-decor .decor-icon{font-size:20px}
+.about-info h3{font-size:28px;font-weight:800;margin-bottom:20px;letter-spacing:-.5px}
+.about-text{color:var(--text2);line-height:1.8;margin-bottom:16px;font-size:15px}
+.about-highlights{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:32px 0}
+.highlight-item{display:flex;align-items:center;gap:10px;padding:12px 16px;border-radius:var(--radius);
+  background:var(--accent-glow);border:1px solid rgba(234,179,8,.1);transition:var(--transition)}
+.highlight-item:hover{border-color:var(--accent);transform:translateX(4px)}
+.highlight-icon{font-size:18px}
+.highlight-text{font-size:14px;font-weight:500}
+.about-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:36px}
+.about-stat{text-align:center;padding:20px;border-radius:var(--radius-lg);background:var(--card);
+  border:1px solid var(--border);transition:var(--transition)}
+.about-stat:hover{border-color:var(--accent);transform:translateY(-4px);box-shadow:var(--shadow-lg)}
+.about-stat .stat-num{font-size:32px;font-weight:900;letter-spacing:-1px;
+  background:var(--gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.about-stat .stat-text{font-size:12px;color:var(--text3);margin-top:4px;text-transform:uppercase;letter-spacing:1px}
+
+/* ======================== SERVICES ======================== */
+.services-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+.service-card{position:relative;padding:36px;border-radius:var(--radius-xl);background:var(--card);
+  border:1px solid var(--border);transition:var(--transition);overflow:hidden;cursor:default}
+.service-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  background:var(--gradient);opacity:0;transition:opacity .3s}
+.service-card:hover{border-color:var(--border2);transform:translateY(-6px);box-shadow:var(--shadow-lg)}
+.service-card:hover::before{opacity:1}
+.service-icon{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;
+  font-size:24px;margin-bottom:20px;background:var(--accent-glow);border:1px solid rgba(234,179,8,.1);
+  transition:var(--transition)}
+.service-card:hover .service-icon{transform:scale(1.1);border-color:var(--accent)}
+.service-card h3{font-size:20px;font-weight:700;margin-bottom:12px;letter-spacing:-.3px}
+.service-card p{color:var(--text2);font-size:14px;line-height:1.7;margin-bottom:20px}
+.service-tags{display:flex;flex-wrap:wrap;gap:8px}
+.service-tag{padding:4px 10px;border-radius:6px;font-size:12px;font-weight:500;color:var(--text3);
+  background:var(--bg);border:1px solid var(--border);transition:var(--transition)}
+.service-card:hover .service-tag{border-color:var(--border2)}
+
+/* ======================== SKILLS / TECH MARQUEE ======================== */
+.tech-section{padding:80px 24px;overflow:hidden}
+.tech-label{text-align:center;font-size:13px;color:var(--text3);text-transform:uppercase;letter-spacing:3px;
+  font-weight:600;margin-bottom:32px}
+.marquee-wrap{display:flex;gap:24px;overflow:hidden;mask-image:linear-gradient(90deg,transparent,black 10%,black 90%,transparent)}
+.marquee-track{display:flex;gap:24px;animation:marquee 30s linear infinite;flex-shrink:0}
+.marquee-wrap:hover .marquee-track{animation-play-state:paused}
+.tech-item{display:flex;align-items:center;gap:10px;padding:12px 24px;border-radius:100px;
+  background:var(--card);border:1px solid var(--border);white-space:nowrap;font-size:14px;
+  font-weight:500;transition:var(--transition);cursor:default}
+.tech-item:hover{border-color:var(--accent);background:var(--accent-glow);color:var(--accent2)}
+.tech-item .tech-icon{font-size:20px}
+
+/* ======================== SKILLS BARS ======================== */
+.skills-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:20px;margin-top:48px}
+.skill-item{padding:24px;border-radius:var(--radius-lg);background:var(--card);border:1px solid var(--border);
+  transition:var(--transition)}
+.skill-item:hover{border-color:var(--border2);transform:translateY(-2px)}
+.skill-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.skill-header .skill-name{display:flex;align-items:center;gap:10px;font-weight:600;font-size:15px}
+.skill-header .skill-icon{font-size:20px;transition:transform .3s}
+.skill-item:hover .skill-icon{transform:scale(1.2)}
+.skill-header .skill-pct{font-size:14px;font-weight:700;color:var(--accent2);font-family:var(--mono)}
+.skill-bar{height:6px;background:var(--bg);border-radius:3px;overflow:hidden}
+.skill-fill{height:100%;border-radius:3px;background:var(--gradient);width:0%;transition:width 2s cubic-bezier(.16,1,.3,1);position:relative}
+.skill-fill.animate{width:var(--w)}
+.skill-fill::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.2),transparent);animation:shimmer 2s infinite}
+
+/* ======================== PROJECTS ======================== */
+.projects-filter{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:40px}
+.filter-pill{padding:8px 20px;border-radius:100px;font-size:14px;font-weight:500;border:1px solid var(--border);
+  background:transparent;color:var(--text3);transition:var(--transition)}
+.filter-pill:hover{border-color:var(--border2);color:var(--text)}
+.filter-pill.active{background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:0 4px 12px rgba(234,179,8,.3)}
+.projects-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:24px}
+.project-card{border-radius:var(--radius-xl);background:var(--card);border:1px solid var(--border);
+  overflow:hidden;transition:var(--transition);cursor:pointer}
+.project-card:hover{border-color:var(--border2);transform:translateY(-6px);box-shadow:var(--shadow-lg)}
+.project-thumb{height:240px;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.project-thumb-bg{position:absolute;inset:0;transition:transform .6s}
+.project-card:hover .project-thumb-bg{transform:scale(1.05)}
+.project-thumb .proj-icon{position:relative;z-index:2;font-size:64px;filter:drop-shadow(0 4px 12px rgba(0,0,0,.3));
+  transition:var(--transition)}
+.project-card:hover .proj-icon{transform:scale(1.15) rotate(5deg)}
+.project-thumb .proj-overlay{position:absolute;inset:0;background:linear-gradient(to top,var(--card),transparent 50%);z-index:1}
+.project-thumb .proj-cat{position:absolute;top:16px;right:16px;z-index:3;padding:4px 12px;
+  border-radius:6px;background:rgba(0,0,0,.4);backdrop-filter:blur(10px);color:#fff;font-size:12px;font-weight:600}
+.project-body{padding:24px}
+.project-body h3{font-size:20px;font-weight:700;margin-bottom:8px;transition:color .3s;letter-spacing:-.3px}
+.project-card:hover .project-body h3{color:var(--accent2)}
+.project-body p{color:var(--text2);font-size:14px;line-height:1.6;margin-bottom:16px}
+.project-body .tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:20px}
+.project-body .tag{padding:3px 10px;border-radius:6px;font-size:11px;font-weight:600;background:var(--bg);
+  border:1px solid var(--border);color:var(--text3)}
+.project-body .actions{display:flex;gap:10px}
+.project-body .actions .btn{padding:10px 20px;font-size:13px;border-radius:10px;flex:1;justify-content:center}
+
+/* ======================== EXPERIENCE ======================== */
+.exp-grid{display:grid;gap:24px}
+.exp-card{display:grid;grid-template-columns:200px 1fr;gap:32px;padding:32px;border-radius:var(--radius-xl);
+  background:var(--card);border:1px solid var(--border);transition:var(--transition);position:relative}
+.exp-card::before{content:'absolute';position:absolute;left:212px;top:0;bottom:0;width:1px;background:var(--border)}
+.exp-card:hover{border-color:var(--border2);transform:translateX(4px);box-shadow:var(--shadow-lg)}
+.exp-date{font-family:var(--mono);font-size:13px;color:var(--accent2);font-weight:500;padding-top:4px}
+.exp-dot{width:10px;height:10px;border-radius:50%;background:var(--accent);margin-top:8px;box-shadow:0 0 0 4px var(--accent-glow)}
+.exp-info h3{font-size:20px;font-weight:700;margin-bottom:4px;letter-spacing:-.3px}
+.exp-info .company{color:var(--accent2);font-weight:500;margin-bottom:12px;font-size:15px}
+.exp-info p{color:var(--text2);font-size:14px;line-height:1.7;margin-bottom:12px}
+.exp-skills{display:flex;flex-wrap:wrap;gap:6px}
+.exp-skill{padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;background:var(--accent-glow);
+  color:var(--accent2);border:1px solid rgba(234,179,8,.1)}
+
+/* ======================== TESTIMONIALS ======================== */
+.testimonials-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+.testimonial-card{padding:32px;border-radius:var(--radius-xl);background:var(--card);
+  border:1px solid var(--border);transition:var(--transition)}
+.testimonial-card:hover{border-color:var(--border2);transform:translateY(-4px);box-shadow:var(--shadow-lg)}
+.testimonial-stars{color:var(--yellow);font-size:16px;margin-bottom:16px;letter-spacing:2px}
+.testimonial-text{color:var(--text2);font-size:14px;line-height:1.8;margin-bottom:24px;font-style:italic}
+.testimonial-author{display:flex;align-items:center;gap:12px}
+.testimonial-avatar{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:20px;background:var(--accent-glow);border:1px solid rgba(234,179,8,.1)}
+.testimonial-meta .name{font-weight:600;font-size:14px}
+.testimonial-meta .role{color:var(--text3);font-size:12px}
+
+/* ======================== CONTACT ======================== */
+.contact-grid{display:grid;grid-template-columns:1fr 1fr;gap:48px}
+.contact-left h3{font-size:32px;font-weight:800;margin-bottom:16px;letter-spacing:-.5px}
+.contact-left>p{color:var(--text2);line-height:1.8;margin-bottom:36px;font-size:15px}
+.contact-links{display:flex;flex-direction:column;gap:16px}
+.contact-link{display:flex;align-items:center;gap:16px;padding:16px 20px;border-radius:var(--radius-lg);
+  background:var(--card);border:1px solid var(--border);transition:var(--transition);cursor:pointer}
+.contact-link:hover{border-color:var(--accent);transform:translateX(6px);box-shadow:0 4px 20px rgba(234,179,8,.1)}
+.contact-link .cl-icon{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;
+  font-size:22px;background:var(--accent-glow);border:1px solid rgba(234,179,8,.1);transition:var(--transition)}
+.contact-link:hover .cl-icon{transform:scale(1.1)}
+.contact-link .cl-text .label{font-size:12px;color:var(--text3);text-transform:uppercase;letter-spacing:1px}
+.contact-link .cl-text .value{font-weight:600;font-size:15px;margin-top:2px}
+.contact-form{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-xl);padding:36px;transition:var(--transition)}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.form-group{margin-bottom:20px}
+.form-group.full{grid-column:1/-1}
+.form-group label{display:block;font-size:13px;font-weight:600;color:var(--text2);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px}
+.form-group input,.form-group textarea,.form-group select{width:100%;padding:14px 16px;border-radius:var(--radius);
+  background:var(--bg);border:1.5px solid var(--border);color:var(--text);font-size:14px;font-family:var(--font);
+  transition:var(--transition);outline:none}
+.form-group input:focus,.form-group textarea:focus,.form-group select:focus{border-color:var(--accent);
+  box-shadow:0 0 0 4px var(--accent-glow)}
+.form-group input.err,.form-group textarea.err{border-color:var(--red)}
+.form-group textarea{resize:none;min-height:140px}
+.form-group .err-msg{color:var(--red);font-size:12px;margin-top:6px;display:none;align-items:center;gap:4px}
+.form-group .err-msg.show{display:flex}
+.form-group .char-counter{text-align:right;font-size:12px;color:var(--text4);margin-top:4px;font-family:var(--mono)}
+.form-submit{width:100%;padding:16px;border-radius:var(--radius);background:var(--accent);color:#fff;border:none;
+  font-weight:700;font-size:16px;transition:var(--transition);display:flex;align-items:center;justify-content:center;gap:8px}
+.form-submit:hover{background:var(--accent2);transform:translateY(-2px);box-shadow:0 8px 25px rgba(234,179,8,.4)}
+.form-submit:disabled{opacity:.6;cursor:not-allowed;transform:none!important;box-shadow:none!important}
+.form-submit .spinner{width:20px;height:20px;border:3px solid rgba(255,255,255,.3);border-top-color:#fff;
+  border-radius:50%;animation:spin .7s linear infinite}
+.success-view{text-align:center;padding:60px 20px}
+.success-view .success-anim{font-size:64px;animation:scaleIn .5s ease;margin-bottom:20px}
+.success-view h3{font-size:24px;font-weight:800;margin-bottom:8px}
+.success-view p{color:var(--text2)}
+
+/* ======================== FOOTER ======================== */
+.footer{border-top:1px solid var(--border);padding:60px 24px 32px;transition:var(--transition)}
+.footer-grid{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:48px;margin-bottom:48px}
+.footer-brand p{color:var(--text2);font-size:14px;line-height:1.7;margin-top:16px;max-width:280px}
+.footer-col h4{font-size:14px;font-weight:700;margin-bottom:16px;text-transform:uppercase;letter-spacing:1px}
+.footer-link{display:block;color:var(--text3);font-size:14px;padding:6px 0;transition:var(--transition);cursor:pointer;border:none;background:none;font-family:var(--font)}
+.footer-link:hover{color:var(--accent2);transform:translateX(4px)}
+.footer-bottom{max-width:1200px;margin:0 auto;padding-top:32px;border-top:1px solid var(--border);
+  display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px}
+.footer-bottom p{color:var(--text4);font-size:13px}
+.footer-socials{display:flex;gap:8px}
+.footer-social{width:36px;height:36px;border-radius:10px;border:1px solid var(--border);background:var(--card);
+  display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--text3);
+  transition:var(--transition);cursor:pointer}
+.footer-social:hover{border-color:var(--accent);color:var(--accent2);background:var(--accent-glow);transform:translateY(-2px)}
+
+/* ======================== SCROLL TOP ======================== */
+.scroll-top-btn{position:fixed;bottom:96px;right:24px;width:44px;height:44px;border-radius:12px;
+  background:var(--card);border:1px solid var(--border);color:var(--text);font-size:18px;cursor:pointer;
+  z-index:90;transition:var(--transition);display:flex;align-items:center;justify-content:center;
+  opacity:0;transform:translateY(20px);pointer-events:none}
+.scroll-top-btn.show{opacity:1;transform:translateY(0);pointer-events:auto}
+.scroll-top-btn:hover{border-color:var(--accent);background:var(--accent-glow);color:var(--accent2);transform:translateY(-2px)}
+
+/* ======================== CHATBOT ======================== */
+.chat-fab{position:fixed;bottom:24px;right:24px;width:60px;height:60px;border-radius:50%;
+  background:var(--gradient);border:none;color:#fff;font-size:26px;cursor:pointer;z-index:100;
+  display:flex;align-items:center;justify-content:center;box-shadow:0 8px 30px rgba(234,179,8,.4);transition:var(--transition)}
+.chat-fab:hover{transform:scale(1.08);box-shadow:0 12px 40px rgba(234,179,8,.5)}
+.chat-fab .notif-dot{position:absolute;top:-2px;right:-2px;width:14px;height:14px;background:var(--emerald);
+  border-radius:50%;border:3px solid var(--bg);animation:pulse 2s infinite}
+.chat-panel{position:fixed;bottom:96px;right:24px;width:400px;max-width:calc(100vw - 48px);z-index:100;
+  border-radius:var(--radius-xl);background:var(--card);border:1px solid var(--border);box-shadow:0 25px 60px rgba(0,0,0,.4);
+  overflow:hidden;display:flex;flex-direction:column;height:540px;
+  transition:all .4s cubic-bezier(.16,1,.3,1);transform-origin:bottom right;
+  opacity:0;transform:translateY(20px) scale(.95);pointer-events:none}
+.chat-panel.open{opacity:1;transform:translateY(0) scale(1);pointer-events:auto}
+.chat-panel-header{padding:20px;background:var(--gradient);display:flex;align-items:center;gap:14px;flex-shrink:0}
+.chat-panel-avatar{width:44px;height:44px;background:rgba(255,255,255,.2);border-radius:50%;
+  display:flex;align-items:center;justify-content:center;font-size:22px;backdrop-filter:blur(10px)}
+.chat-panel-info h4{color:#fff;font-weight:700;font-size:16px}
+.chat-panel-status{display:flex;align-items:center;gap:6px;font-size:12px;color:rgba(255,255,255,.8)}
+.chat-panel-status .online-dot{width:7px;height:7px;background:#4ade80;border-radius:50%;animation:pulse 2s infinite}
+.chat-panel-messages{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;scrollbar-width:thin}
+.chat-bubble{display:flex;animation:slideUp .3s ease}
+.chat-bubble.user{justify-content:flex-end}
+.chat-bubble-inner{max-width:82%;padding:12px 16px;border-radius:16px;font-size:14px;line-height:1.6;white-space:pre-line}
+.chat-bubble.bot .chat-bubble-inner{background:var(--bg);color:var(--text);border-bottom-left-radius:4px}
+.chat-bubble.user .chat-bubble-inner{background:var(--accent);color:#fff;border-bottom-right-radius:4px}
+.chat-bubble .bubble-time{font-size:11px;margin-top:4px;opacity:.5}
+.typing-dots{display:flex;gap:5px;padding:12px 16px;background:var(--bg);border-radius:16px;border-bottom-left-radius:4px;width:fit-content}
+.typing-dots span{width:7px;height:7px;background:var(--text3);border-radius:50%}
+.typing-dots span:nth-child(1){animation:dotPulse 1.4s infinite}
+.typing-dots span:nth-child(2){animation:dotPulse 1.4s infinite .2s}
+.typing-dots span:nth-child(3){animation:dotPulse 1.4s infinite .4s}
+.chat-quick-actions{padding:8px 16px;border-top:1px solid var(--border);display:flex;gap:6px;overflow-x:auto;
+  scrollbar-width:none;flex-shrink:0}
+.chat-quick-actions::-webkit-scrollbar{display:none}
+.chat-quick-btn{padding:6px 14px;border-radius:8px;font-size:12px;font-weight:600;
+  background:var(--bg);border:1px solid var(--border);color:var(--text2);cursor:pointer;
+  transition:var(--transition);white-space:nowrap;font-family:var(--font)}
+.chat-quick-btn:hover{border-color:var(--accent);color:var(--accent2);background:var(--accent-glow)}
+.chat-input-wrap{padding:16px;border-top:1px solid var(--border);display:flex;gap:10px;flex-shrink:0}
+.chat-input-wrap input{flex:1;padding:12px 16px;border-radius:12px;background:var(--bg);border:1.5px solid var(--border);
+  color:var(--text);font-size:14px;outline:none;font-family:var(--font);transition:var(--transition)}
+.chat-input-wrap input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow)}
+.chat-send-btn{width:44px;height:44px;border-radius:12px;background:var(--accent);border:none;color:#fff;
+  font-size:18px;cursor:pointer;transition:var(--transition);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.chat-send-btn:hover{background:var(--accent2);transform:scale(1.05)}
+.chat-send-btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+
+/* ======================== RESPONSIVE ======================== */
+@media(max-width:1024px){
+  .hero-container{grid-template-columns:1fr;text-align:center;gap:48px}
+  .hero-subtitle{margin-left:auto;margin-right:auto}
+  .hero-actions{justify-content:center}
+  .hero-stats{justify-content:center}
+  .hero-visual-inner{max-width:400px;margin:0 auto}
+  .about-grid{grid-template-columns:1fr;gap:48px}
+  .about-image-wrapper{max-width:400px;margin:0 auto}
+  .services-grid{grid-template-columns:1fr 1fr}
+  .projects-grid{grid-template-columns:1fr 1fr}
+  .testimonials-grid{grid-template-columns:1fr}
+  .contact-grid{grid-template-columns:1fr}
+  .exp-card{grid-template-columns:1fr;gap:16px}
+  .exp-card::before{display:none}
+  .footer-grid{grid-template-columns:1fr 1fr}
+  .skills-grid{grid-template-columns:1fr}
+}
+@media(max-width:768px){
+  .nav-links{display:none}
+  .nav-cta{display:none}
+  .hamburger{display:flex}
+  .mobile-nav{display:block}
+  .services-grid{grid-template-columns:1fr}
+  .projects-grid{grid-template-columns:1fr}
+  .about-highlights{grid-template-columns:1fr}
+  .about-stats{grid-template-columns:repeat(3,1fr)}
+  .form-grid{grid-template-columns:1fr}
+  .footer-grid{grid-template-columns:1fr}
+  .hero-stats{gap:24px}
+  .float-el{display:none}
+  .about-decor{display:none}
+}
+</style>
+</head>
+<body>
+
+<nav class="navbar" id="navbar">
+  <div class="nav-container">
+    <a class="nav-logo" href="#home" onclick="smoothScroll('home')">
+      <div class="logo-icon">N</div>
+      <span>NDRP</span>
+    </a>
+    <div class="nav-links" id="navLinks"></div>
+    <div class="nav-right">
+      <button class="theme-btn" id="themeBtn" onclick="toggleTheme()" title="Toggle theme">🌙</button>
+      <button class="nav-cta" onclick="smoothScroll('contact')">Whitelist Now</button>
+      <button class="hamburger" id="hamburger" onclick="toggleMobileNav()">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+</nav>
+<div class="mobile-nav" id="mobileNav"></div>
+
+<section class="hero" id="home">
+  <div class="hero-bg">
+    <div class="hero-grid"></div>
+    <div class="hero-gradient-orb o1"></div>
+    <div class="hero-gradient-orb o2"></div>
+    <div class="hero-gradient-orb o3"></div>
+  </div>
+  <div class="hero-container">
+    <div class="hero-content">
+      <div class="hero-badge">
+        <div class="dot"></div>
+        <div class="badge-text">Server Online - Season 4</div>
+      </div>
+      <h1 class="hero-title">
+        <span class="line">Your story begins</span>
+        <span class="line">in <span class="gradient-text">Los Santos.</span></span>
+      </h1>
+      <p class="hero-subtitle">Join New Day RP (NDRP), the premier whitelisted Grand Theft Auto V roleplay community on FiveM. Serious RP, active economy, and endless possibilities.</p>
+      <div class="hero-actions">
+        <button class="btn btn-primary" onclick="smoothScroll('experience')">Apply for Whitelist <span class="arrow">→</span></button>
+        <button class="btn btn-secondary" onclick="window.open('https://discord.gg/newdayrp', '_blank')">Join Discord</button>
+      </div>
+      <div class="hero-stats">
+        <div class="hero-stat">
+          <div class="stat-value"><span class="accent counter" data-target="48">0</span>k+</div>
+          <div class="stat-label">Registered Members</div>
+        </div>
+        <div class="hero-stat">
+          <div class="stat-value"><span class="accent counter" data-target="250">0</span>+</div>
+          <div class="stat-label">Daily Peak Players</div>
+        </div>
+        <div class="hero-stat">
+          <div class="stat-value"><span class="accent counter" data-target="5">0</span>+</div>
+          <div class="stat-label">Years Active</div>
+        </div>
+      </div>
+    </div>
+    <div class="hero-visual">
+      <div class="hero-visual-inner">
+        <div class="code-card">
+          <div class="code-header">
+            <div class="code-dot red"></div>
+            <div class="code-dot yellow"></div>
+            <div class="code-dot green"></div>
+            <div class="code-tab"><span class="file-icon">⚡</span> player_data.lua</div>
+          </div>
+          <div class="code-body" id="codeBody"></div>
+        </div>
+        <div class="float-el fe1"><div class="el-icon">🚓</div> LSPD Active</div>
+        <div class="float-el fe2"><div class="el-icon">🚑</div> EMS On Duty</div>
+        <div class="float-el fe3"><div class="el-icon">💼</div> Player Economy</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="tech-section" id="techMarquee">
+  <div class="tech-label">Server Features & Systems</div>
+  <div class="marquee-wrap">
+    <div class="marquee-track" id="marqueeTrack1"></div>
+    <div class="marquee-track" id="marqueeTrack2"></div>
+  </div>
+</div>
+
+<section class="section" id="about">
+  <div class="section-container">
+    <div class="about-grid">
+      <div class="about-image-wrapper reveal-left">
+        <div class="about-image">
+          <div class="about-image-bg"><div class="morph"></div></div>
+          <div class="about-image-content">
+            <div class="about-avatar">🏙️</div>
+            <div class="about-avatar-label">Los Santos</div>
+          </div>
+        </div>
+        <div class="about-decor d1"><span class="decor-icon">🎙️</span> Voice RP</div>
+        <div class="about-decor d2"><span class="decor-icon">📖</span> Story Driven</div>
+      </div>
+      <div class="reveal-right">
+        <div class="section-header">
+          <div class="section-label"><span class="label-line"></span> Welcome</div>
+          <h2 class="section-title">A living, breathing<br><span class="gradient-text">state awaits you.</span></h2>
+        </div>
+        <p class="about-text">New Day RP is a serious, story-driven Grand Theft Auto V roleplay community. We pride ourselves on creating an immersive environment where your choices matter and your character's story can unfold naturally.</p>
+        <p class="about-text">With a dedicated staff team, custom scripts, an active government, and a player-driven economy, NDRP is built to give you the ultimate FiveM experience.</p>
+        <div class="about-highlights">
+          <div class="highlight-item"><span class="highlight-icon">⚖️</span><span class="highlight-text">Fair Play & Rules</span></div>
+          <div class="highlight-item"><span class="highlight-icon">🏎️</span><span class="highlight-text">Custom Vehicles</span></div>
+          <div class="highlight-item"><span class="highlight-icon">👔</span><span class="highlight-text">Player Businesses</span></div>
+          <div class="highlight-item"><span class="highlight-icon">🏠</span><span class="highlight-text">Housing System</span></div>
+        </div>
+        <div class="about-stats">
+          <div class="about-stat"><div class="stat-num counter" data-target="71">0</div>k+<div class="stat-text">Forum Threads</div></div>
+          <div class="about-stat"><div class="stat-num counter" data-target="339">0</div>k+<div class="stat-text">Messages</div></div>
+          <div class="about-stat"><div class="stat-num counter" data-target="100">0</div>%<div class="stat-text">Custom Lore</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section alt-bg" id="features">
+  <div class="section-container">
+    <div class="section-header center reveal">
+      <div class="section-label"><span class="label-line"></span> Life in the City <span class="label-line"></span></div>
+      <h2 class="section-title">Choose Your <span class="gradient-text">Path</span></h2>
+      <p class="section-subtitle">Whether you want to uphold the law, run a legitimate enterprise, or control the criminal underworld, there is a place for you.</p>
+    </div>
+    <div class="services-grid" id="servicesGrid"></div>
+  </div>
+</section>
+
+<section class="section" id="stats">
+  <div class="section-container">
+    <div class="section-header center reveal">
+      <div class="section-label"><span class="label-line"></span> The Framework <span class="label-line"></span></div>
+      <h2 class="section-title">Server <span class="gradient-text">Capabilities</span></h2>
+      <p class="section-subtitle">A deep dive into the performance, balance, and quality standards maintained by our development team.</p>
+    </div>
+    <div class="skills-grid" id="skillsGrid"></div>
+  </div>
+</section>
+
+<section class="section alt-bg" id="departments">
+  <div class="section-container">
+    <div class="section-header reveal">
+      <div class="section-label"><span class="label-line"></span> Opportunities</div>
+      <h2 class="section-title">Government & <span class="gradient-text">Factions</span></h2>
+      <p class="section-subtitle">Explore the major public departments and whitelisted jobs available in New Day RP.</p>
+    </div>
+    <div class="projects-filter" id="projectsFilter"></div>
+    <div class="projects-grid" id="projectsGrid"></div>
+  </div>
+</section>
+
+<section class="section" id="process">
+  <div class="section-container">
+    <div class="section-header center reveal">
+      <div class="section-label"><span class="label-line"></span> Getting Started <span class="label-line"></span></div>
+      <h2 class="section-title">Whitelist <span class="gradient-text">Process</span></h2>
+      <p class="section-subtitle">We enforce a strict whitelisting process to ensure a high standard of roleplay across the community.</p>
+    </div>
+    <div class="exp-grid" id="expGrid"></div>
+  </div>
+</section>
+
+<section class="section alt-bg" id="reviews">
+  <div class="section-container">
+    <div class="section-header center reveal">
+      <div class="section-label"><span class="label-line"></span> Community Voices <span class="label-line"></span></div>
+      <h2 class="section-title">Player <span class="gradient-text">Stories</span></h2>
+    </div>
+    <div class="testimonials-grid" id="testimonialsGrid"></div>
+  </div>
+</section>
+
+<section class="section" id="contact">
+  <div class="section-container">
+    <div class="contact-grid">
+      <div class="contact-left reveal-left">
+        <div class="section-label"><span class="label-line"></span> Need Help?</div>
+        <h3>Join the<br>Community 🚀</h3>
+        <p>If you have questions about rules, applications, or the server, the best place to reach us is on our Discord or Forums.</p>
+        <div class="contact-links">
+          <div class="contact-link"><div class="cl-icon">💬</div><div class="cl-text"><div class="label">Discord</div><div class="value">discord.gg/newdayrp</div></div></div>
+          <div class="contact-link"><div class="cl-icon">🌐</div><div class="cl-text"><div class="label">Forums</div><div class="value">newdayrp.com/forums</div></div></div>
+          <div class="contact-link"><div class="cl-icon">🛒</div><div class="cl-text"><div class="label">Store</div><div class="value">Tebex Shop</div></div></div>
+          <div class="contact-link" onclick="openChat()"><div class="cl-icon">🤖</div><div class="cl-text"><div class="label">Support Bot</div><div class="value">Ask questions 24/7</div></div></div>
+        </div>
+      </div>
+      <div class="reveal-right">
+        <div class="contact-form" id="contactFormBox">
+          <form id="contactForm" onsubmit="submitForm(event)" novalidate>
+            <div class="form-grid">
+              <div class="form-group"><label>Character Name</label><input id="f_name" placeholder="John Doe"><div class="err-msg" id="err_name">⚠ Required</div></div>
+              <div class="form-group"><label>Discord Username</label><input id="f_email" type="text" placeholder="username#1234"><div class="err-msg" id="err_email">⚠ Valid discord tag required</div></div>
+              <div class="form-group full"><label>Inquiry Subject</label><input id="f_subject" placeholder="Application help..."><div class="err-msg" id="err_subject">⚠ Required</div></div>
+              <div class="form-group full">
+                <label>Message *</label>
+                <textarea id="f_message" placeholder="How can we help you?" oninput="updateCount()"></textarea>
+                <div class="err-msg" id="err_message">⚠ Min 10 characters</div>
+                <div class="char-counter"><span id="msgCount">0</span> / 500</div>
+              </div>
+            </div>
+            <button class="form-submit" id="submitBtn" type="submit">Submit Inquiry <span class="arrow">→</span></button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <a class="nav-logo" href="#home" onclick="smoothScroll('home')"><div class="logo-icon">N</div><span>NDRP</span></a>
+      <p>A serious, story-driven Grand Theft Auto V roleplay community operating on the FiveM multiplayer framework.</p>
+    </div>
+    <div class="footer-col">
+      <h4>Navigation</h4>
+      <div id="footerNav"></div>
+    </div>
+    <div class="footer-col">
+      <h4>Important Links</h4>
+      <button class="footer-link">Server Rules</button>
+      <button class="footer-link">Whitelist Application</button>
+      <button class="footer-link">Tebex Store</button>
+      <button class="footer-link">Elections & Gov</button>
+    </div>
+    <div class="footer-col">
+      <h4>Connect</h4>
+      <button class="footer-link">Discord</button>
+      <button class="footer-link">Forums</button>
+      <button class="footer-link">Twitter / X</button>
+      <button class="footer-link">Twitch</button>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p>© 2024 New Day RP. All rights reserved. | Community platform by XenForo.</p>
+    <div class="footer-socials">
+      <a class="footer-social" title="Discord">💬</a>
+      <a class="footer-social" title="Forums">🌐</a>
+      <a class="footer-social" title="Twitter">𝕏</a>
+    </div>
+  </div>
+</footer>
+
+<button class="scroll-top-btn" id="scrollTopBtn" onclick="window.scrollTo({top:0,behavior:'smooth'})" title="Back to top">↑</button>
+
+<button class="chat-fab" id="chatFab" onclick="toggleChat()">
+  <span id="fabIcon">💬</span>
+  <span class="notif-dot" id="chatNotifDot"></span>
+</button>
+
+<div class="chat-panel" id="chatPanel">
+  <div class="chat-panel-header">
+    <div class="chat-panel-avatar">🤖</div>
+    <div class="chat-panel-info">
+      <h4>NDRP Assistant</h4>
+      <div class="chat-panel-status"><span class="online-dot"></span> Online — Ready to help</div>
+    </div>
+  </div>
+  <div class="chat-panel-messages" id="chatMessagesEl"></div>
+  <div class="chat-quick-actions" id="chatQuickEl"></div>
+  <div class="chat-input-wrap">
+    <input id="chatInputEl" placeholder="Ask me anything..." onkeydown="if(event.key==='Enter')sendChatMsg()">
+    <button class="chat-send-btn" onclick="sendChatMsg()">➤</button>
+  </div>
+</div>
+
+<script>
+// ======================== DATA ========================
+const SECTIONS = ['home','about','features','stats','departments','process','reviews','contact'];
+const TECH_LIST = [
+  {icon:'🚗',name:'Custom Vehicles'},{icon:'💼',name:'Player Economy'},{icon:'👮',name:'Active Police'},{icon:'⚖️',name:'DOJ & Courts'},
+  {icon:'🚑',name:'Pillbox EMS'},{icon:'🏠',name:'Real Estate'},{icon:'🎙️',name:'Voice RP'},{icon:'🔪',name:'Gangs & Crime'},
+  {icon:'🛠️',name:'Mechanics'},{icon:'🌲',name:'BCSO'},{icon:'📱',name:'Smartphones'},{icon:'📝',name:'Whitelisted'}
+];
+const SKILLS_DATA = [
+  {name:'Server Uptime',pct:99,icon:'⚡'},{name:'Roleplay Quality',pct:95,icon:'🎭'},
+  {name:'Active Staff',pct:90,icon:'🛡️'},{name:'Economy Balance',pct:85,icon:'💰'},
+  {name:'Custom Assets',pct:100,icon:'🎨'},{name:'Player Retention',pct:88,icon:'📈'},
+  {name:'Optimization/FPS',pct:92,icon:'💻'},{name:'Story Events',pct:80,icon:'📆'}
+];
+const SERVICES_DATA = [
+  {icon:'👮',title:'Law Enforcement',desc:'Join the LSPD, BCSO, or SASP to keep the streets of San Andreas safe. Extensive training and progression.',tags:['LSPD','BCSO','SASP','Detectives']},
+  {icon:'🚑',title:'Medical Services',desc:'Become a hero at Pillbox Medical. Save lives, perform surgeries, and handle state emergencies.',tags:['EMS','Doctors','Search & Rescue']},
+  {icon:'💼',title:'Civilian Enterprise',desc:'Start a business, run a nightclub, fix cars at a mechanic shop, or become the Governor through elections.',tags:['Mechanic','Clubs','DOJ','Gov']},
+  {icon:'🔪',title:'Criminal Underworld',desc:'Form a syndicate, run illicit goods, plan heists, and evade the law to build your criminal empire.',tags:['Gangs','Heists','Racing','Crafting']},
+  {icon:'🏠',title:'Real Estate',desc:'Purchase homes, decorate interiors, and build your life in Los Santos with our extensive housing system.',tags:['Housing','Decorating','Garages']},
+  {icon:'⚖️',title:'Department of Justice',desc:'Defend clients as a lawyer or preside over criminal and civil cases as a state Judge.',tags:['Lawyers','Judges','Courts']}
+];
+const PROJECTS_DATA = [
+  {title:'Los Santos Police (LSPD)',desc:'The primary law enforcement agency for the city of Los Santos.',tags:['Police','City','Detectives'],cat:'Law',icon:'🚓',grad:'linear-gradient(135deg,#2563eb,#1d4ed8)'},
+  {title:'Blaine County Sheriffs (BCSO)',desc:'Patrolling the county lines, Sandy Shores, and Paleto Bay.',tags:['Sheriff','County','Off-Road'],cat:'Law',icon:'🌲',grad:'linear-gradient(135deg,#b45309,#78350f)'},
+  {title:'Pillbox Medical (EMS)',desc:'The dedicated medical staff providing care for all citizens.',tags:['Hospital','Rescue','Fire'],cat:'Medical',icon:'🚑',grad:'linear-gradient(135deg,#ef4444,#b91c1c)'},
+  {title:'State Legislature & Gov',desc:'Elected officials writing laws and running the state budget.',tags:['Governor','Politics','Laws'],cat:'Gov',icon:'🏛️',grad:'linear-gradient(135deg,#4b5563,#1f2937)'},
+  {title:'Harmony Repair',desc:'One of the premier mechanic shops keeping the city moving.',tags:['Mechanic','Tuning','Tow'],cat:'Civilian',icon:'🔧',grad:'linear-gradient(135deg,#eab308,#ca8a04)'},
+  {title:'Department of Justice',desc:'Lawyers and judges ensuring fair trials and legal RP.',tags:['Lawyer','Judge','Court'],cat:'Gov',icon:'⚖️',grad:'linear-gradient(135deg,#8b5cf6,#6d28d9)'}
+];
+const EXP_DATA = [
+  {date:'Step 1',role:'Join the Community',company:'Discord & Forums',desc:'Join our Discord server and create an account on the NDRP forums. This is where all announcements and community discussions happen.',skills:['Discord','Register']},
+  {date:'Step 2',role:'Read the Rules',company:'Wiki / Guidelines',desc:'Thoroughly read the server rules, guidelines, and guides on our forums. Understanding Roleplay Deaths, FailRP, and Meta-gaming is crucial.',skills:['Rules','Reading','Knowledge']},
+  {date:'Step 3',role:'Submit Application',company:'Whitelist App',desc:'Write a detailed character backstory and answer roleplay scenario questions on the forums. Effort matters here!',skills:['Backstory','Creative Writing']},
+  {date:'Step 4',role:'The Interview',company:'Vocal Interview',desc:'Once your written application is accepted, join the waiting room in Discord for a quick vocal interview with a whitelist team member to ensure your mic works and you understand the rules.',skills:['Mic Check','Interview']}
+];
+const TESTIMONIALS = [
+  {text:"The best roleplay server I've been a part of. The community is welcoming, and the storylines you can create here are unforgettable.",name:'John Brave',role:'Civilian Roleplayer',avatar:'🧑',stars:5},
+  {text:"I've been in the LSPD for over a year. The training and department structure are fantastic. Highly recommend applying.",name:'Daria Volkova',role:'LSPD Officer',avatar:'👩‍✈️',stars:5},
+  {text:"Incredible development team! New scripts and custom cars are added regularly. The economy feels perfectly balanced.",name:'Spencer Price',role:'Business Owner',avatar:'👨‍💼',stars:5}
+];
+const BOT_KB = {
+  hello:"👋 Hey! Welcome to New Day RP. How can I help you today?",
+  hi:"👋 Hi there! Ask me about whitelisting, rules, our discord, or departments!",
+  hey:"👋 Hey! Great to have you here. What would you like to know?",
+  ip:"🔒 You must be whitelisted to join the server. The IP is provided in Discord once you pass the interview process.",
+  whitelist:"📝 To get whitelisted:\n1. Join Discord\n2. Read the Rules\n3. Apply on Forums\n4. Pass Vocal Interview",
+  join:"🤝 To join NDRP:\nGo to the 'Whitelist Process' section or click 'Whitelist Now' at the top of the page!",
+  discord:"💬 Our Discord is the hub of our community! Join here: discord.gg/newdayrp",
+  rules:"⚖️ You can find the rules on our forums under the 'Rules, Guidelines and Guides' section. Make sure you read them before applying!",
+  lspd:"🚓 The LSPD is always looking for new recruits. Once whitelisted, you can apply on the forums under the Government section.",
+  ems:"🚑 Pillbox Medical applications open periodically. Keep an eye on the Discord announcements!",
+  tebex:"🛒 You can support the server and get queue priority through our Tebex store.",
+  thanks:"😊 You're welcome! See you in Los Santos!",
+  thank:"😊 Happy to help! Good luck with your application.",
+  bye:"👋 Thanks for stopping by! Have a wonderful day in Los Santos!",
+  help:"🆘 I can help with:\n\n• 📝 How to Whitelist\n• 🔒 Server IP\n• 💬 Discord Link\n• ⚖️ Server Rules\n• 🚓 LSPD / EMS Apps\n\nJust type your question!"
+};
+
+// ======================== STATE ========================
+let darkMode = true;
+let activeNav = 'home';
+let mobileNavOpen = false;
+let chatIsOpen = false;
+let currentFilter = 'All';
+let skillsAnimated = false;
+let countersAnimated = false;
+let chatMsgs = [{id:1,text:"👋 Welcome to NDRP! Ask me about whitelisting, rules, or type 'help' for options!",sender:'bot',time:new Date()}];
+
+// ======================== INIT ========================
+document.addEventListener('DOMContentLoaded', () => {
+  buildNavLinks();
+  buildCodeBlock();
+  buildMarquee();
+  buildServices();
+  buildSkills();
+  buildProjects();
+  buildExperience();
+  buildTestimonials();
+  buildFooterNav();
+  buildChatQuickBtns();
+  renderChatMessages();
+  setupObserver();
+  setupScrollSpy();
+});
+
+// ======================== NAV ========================
+function buildNavLinks() {
+  const nl = document.getElementById('navLinks');
+  const mn = document.getElementById('mobileNav');
+  
+  // Custom mapping for nav text vs IDs
+  const navMap = {
+    'home': 'Home',
+    'about': 'About',
+    'features': 'Features',
+    'departments': 'Departments',
+    'process': 'Whitelist'
+  };
+
+  Object.keys(navMap).forEach(s => {
+    const b = document.createElement('button');
+    b.className = 'nav-link' + (s==='home'?' active':'');
+    b.textContent = navMap[s];
+    b.dataset.sec = s;
+    b.onclick = () => smoothScroll(s);
+    nl.appendChild(b);
+    const mb = b.cloneNode(true);
+    mb.onclick = () => {smoothScroll(s);toggleMobileNav()};
+    mn.appendChild(mb);
+  });
+}
+function smoothScroll(id){document.getElementById(id)?.scrollIntoView({behavior:'smooth'})}
+function toggleMobileNav(){
+  mobileNavOpen=!mobileNavOpen;
+  document.getElementById('hamburger').classList.toggle('open',mobileNavOpen);
+  document.getElementById('mobileNav').classList.toggle('open',mobileNavOpen);
+}
+function setupScrollSpy(){
+  let ticking=false;
+  window.addEventListener('scroll',()=>{
+    if(!ticking){window.requestAnimationFrame(()=>{
+      const sy=window.scrollY;
+      document.getElementById('scrollTopBtn').classList.toggle('show',sy>600);
+      document.getElementById('navbar').classList.toggle('scrolled',sy>50);
+      SECTIONS.forEach(id=>{
+        const el=document.getElementById(id);
+        if(el){const t=el.offsetTop-150,b=t+el.offsetHeight;
+          if(sy>=t&&sy<b&&activeNav!==id){activeNav=id;
+            document.querySelectorAll('.nav-link').forEach(n=>n.classList.toggle('active',n.dataset.sec===id));
+          }
+        }
+      });
+      ticking=false;
+    });ticking=true;}
+  });
+}
+
+// ======================== THEME ========================
+function toggleTheme(){
+  darkMode=!darkMode;
+  document.body.classList.toggle('light',!darkMode);
+  document.getElementById('themeBtn').textContent=darkMode?'🌙':'☀️';
+}
+
+// ======================== CODE BLOCK ========================
+function buildCodeBlock(){
+  const lines = [
+    {ln:1,code:'<span class="kw">local</span> <span class="var">player</span> <span class="op">=</span> <span class="op">{</span>'},
+    {ln:2,code:'<span class="indent"></span><span class="fn">name</span> <span class="op">=</span> <span class="str">"John Brave"</span><span class="op">,</span>'},
+    {ln:3,code:'<span class="indent"></span><span class="fn">job</span> <span class="op">=</span> <span class="str">"police"</span><span class="op">,</span>'},
+    {ln:4,code:'<span class="indent"></span><span class="fn">rank</span> <span class="op">=</span> <span class="str">"Officer II"</span><span class="op">,</span>'},
+    {ln:5,code:'<span class="indent"></span><span class="fn">bank_balance</span> <span class="op">=</span> <span class="num">15000</span><span class="op">,</span>'},
+    {ln:6,code:'<span class="indent"></span><span class="fn">isWhitelisted</span> <span class="op">=</span> <span class="kw">true</span><span class="op">,</span>'},
+    {ln:7,code:'<span class="indent"></span><span class="fn">inventory</span> <span class="op">=</span> <span class="op">{</span><span class="str">"Radio"</span><span class="op">,</span> <span class="str">"Flashlight"</span><span class="op">}</span>'},
+    {ln:8,code:'<span class="op">}</span>'}
+  ];
+  const body=document.getElementById('codeBody');
+  lines.forEach((l,i)=>{
+    const div=document.createElement('div');div.className='line';
+    div.style.animation=`fadeIn .5s ease ${i*80}ms both`;
+    div.innerHTML=`<span class="ln">${l.ln}</span><span>${l.code}</span>`;
+    body.appendChild(div);
+  });
+}
+
+// ======================== MARQUEE ========================
+function buildMarquee(){
+  [document.getElementById('marqueeTrack1'),document.getElementById('marqueeTrack2')].forEach(track=>{
+    TECH_LIST.forEach(t=>{
+      const d=document.createElement('div');d.className='tech-item';
+      d.innerHTML=`<span class="tech-icon">${t.icon}</span>${t.name}`;
+      track.appendChild(d);
+    });
+  });
+}
+
+// ======================== SERVICES ========================
+function buildServices(){
+  const grid=document.getElementById('servicesGrid');
+  SERVICES_DATA.forEach((s,i)=>{
+    const c=document.createElement('div');
+    c.className='service-card reveal stagger-delay';
+    c.style.setProperty('--d',i*100+'ms');
+    c.innerHTML=`<div class="service-icon">${s.icon}</div><h3>${s.title}</h3><p>${s.desc}</p><div class="service-tags">${s.tags.map(t=>`<span class="service-tag">${t}</span>`).join('')}</div>`;
+    grid.appendChild(c);
+  });
+}
+
+// ======================== SKILLS ========================
+function buildSkills(){
+  const grid=document.getElementById('skillsGrid');
+  SKILLS_DATA.forEach((s,i)=>{
+    const d=document.createElement('div');
+    d.className='skill-item reveal stagger-delay';
+    d.style.setProperty('--d',i*80+'ms');
+    d.innerHTML=`<div class="skill-header"><span class="skill-name"><span class="skill-icon">${s.icon}</span>${s.name}</span><span class="skill-pct">${s.pct}%</span></div><div class="skill-bar"><div class="skill-fill" style="--w:${s.pct}%"></div></div>`;
+    grid.appendChild(d);
+  });
+}
+function animateSkills(){if(skillsAnimated)return;skillsAnimated=true;document.querySelectorAll('.skill-fill').forEach(f=>f.classList.add('animate'))}
+
+// ======================== PROJECTS ========================
+function buildProjects(){
+  const cats=['All',...new Set(PROJECTS_DATA.map(p=>p.cat))];
+  const fb=document.getElementById('projectsFilter');
+  cats.forEach(c=>{
+    const b=document.createElement('button');b.className='filter-pill'+(c==='All'?' active':'');
+    b.textContent=c;b.onclick=()=>filterProjects(c);fb.appendChild(b);
+  });
+  renderProjects(PROJECTS_DATA);
+}
+function filterProjects(cat){
+  currentFilter=cat;
+  document.querySelectorAll('.filter-pill').forEach(b=>b.classList.toggle('active',b.textContent===cat));
+  renderProjects(cat==='All'?PROJECTS_DATA:PROJECTS_DATA.filter(p=>p.cat===cat));
+}
+function renderProjects(list){
+  const g=document.getElementById('projectsGrid');g.innerHTML='';
+  list.forEach((p,i)=>{
+    const c=document.createElement('div');c.className='project-card';
+    c.style.animation=`fadeUp .6s ease ${i*100}ms both`;
+    c.innerHTML=`<div class="project-thumb"><div class="project-thumb-bg" style="background:${p.grad}"></div><span class="proj-icon">${p.icon}</span><div class="proj-overlay"></div><span class="proj-cat">${p.cat}</span></div><div class="project-body"><h3>${p.title}</h3><p>${p.desc}</p><div class="tags">${p.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div><div class="actions"><button class="btn btn-primary">Apply on Forums ↗</button></div></div>`;
+    g.appendChild(c);
+  });
+}
+
+// ======================== EXPERIENCE ========================
+function buildExperience(){
+  const g=document.getElementById('expGrid');
+  EXP_DATA.forEach((e,i)=>{
+    const c=document.createElement('div');c.className='exp-card reveal stagger-delay';
+    c.style.setProperty('--d',i*150+'ms');
+    c.innerHTML=`<div><div class="exp-date">${e.date}</div><div class="exp-dot"></div></div><div class="exp-info"><h3>${e.role}</h3><div class="company">${e.company}</div><p>${e.desc}</p><div class="exp-skills">${e.skills.map(s=>`<span class="exp-skill">${s}</span>`).join('')}</div></div>`;
+    g.appendChild(c);
+  });
+}
+
+// ======================== TESTIMONIALS ========================
+function buildTestimonials(){
+  const g=document.getElementById('testimonialsGrid');
+  TESTIMONIALS.forEach((t,i)=>{
+    const c=document.createElement('div');c.className='testimonial-card reveal stagger-delay';
+    c.style.setProperty('--d',i*120+'ms');
+    c.innerHTML=`<div class="testimonial-stars">${'★'.repeat(t.stars)}</div><p class="testimonial-text">"${t.text}"</p><div class="testimonial-author"><div class="testimonial-avatar">${t.avatar}</div><div class="testimonial-meta"><div class="name">${t.name}</div><div class="role">${t.role}</div></div></div>`;
+    g.appendChild(c);
+  });
+}
+
+// ======================== FOOTER NAV ========================
+function buildFooterNav(){
+  const fn=document.getElementById('footerNav');
+  
+  const navMap = {
+    'home': 'Home',
+    'about': 'About Server',
+    'features': 'Features',
+    'departments': 'Departments',
+    'process': 'Whitelist Process'
+  };
+
+  Object.keys(navMap).forEach(s=>{
+    const b=document.createElement('button');b.className='footer-link';
+    b.textContent=navMap[s];
+    b.onclick=()=>smoothScroll(s);fn.appendChild(b);
+  });
+}
+
+// ======================== OBSERVER ========================
+function setupObserver(){
+  const obs=new IntersectionObserver(entries=>{
+    entries.forEach(en=>{
+      if(en.isIntersecting){
+        en.target.classList.add('visible');
+        if(en.target.closest('#stats'))animateSkills();
+        if(en.target.querySelectorAll('.counter').length&&!countersAnimated){countersAnimated=true;animateCounters()}
+      }
+    });
+  },{threshold:.15});
+  document.querySelectorAll('.reveal,.reveal-left,.reveal-right,.reveal-scale').forEach(el=>obs.observe(el));
+  
+  const heroObs=new IntersectionObserver(entries=>{
+    entries.forEach(en=>{if(en.isIntersecting&&!countersAnimated){countersAnimated=true;animateCounters()}});
+  },{threshold:.3});
+  heroObs.observe(document.getElementById('home'));
+}
+
+// ======================== COUNTERS ========================
+function animateCounters(){
+  document.querySelectorAll('.counter').forEach(el=>{
+    const target=+el.dataset.target;let current=0;
+    const step=target/60;
+    const timer=setInterval(()=>{current+=step;if(current>=target){current=target;clearInterval(timer)}
+      el.textContent=Math.round(current);
+    },30);
+  });
+}
+
+// ======================== CONTACT FORM ========================
+function updateCount(){document.getElementById('msgCount').textContent=document.getElementById('f_message').value.length}
+function submitForm(e){
+  e.preventDefault();
+  const n=document.getElementById('f_name'),em=document.getElementById('f_email'),
+    s=document.getElementById('f_subject'),m=document.getElementById('f_message');
+  let ok=true;
+  [[n,'err_name',v=>v.trim().length>=2],[em,'err_email',v=>v.trim().length>=3], // Simple check for discord tag
+   [s,'err_subject',v=>v.trim().length>0],[m,'err_message',v=>v.trim().length>=10]].forEach(([input,errId,check])=>{
+    const valid=check(input.value);
+    input.classList.toggle('err',!valid);
+    document.getElementById(errId).classList.toggle('show',!valid);
+    if(!valid)ok=false;
+  });
+  if(!ok)return;
+  const btn=document.getElementById('submitBtn');
+  btn.disabled=true;btn.innerHTML='<div class="spinner"></div> Sending...';
+  // Simulate API call
+  setTimeout(() => {
+    showSuccess();
+  }, 1000);
+}
+function showSuccess(){
+  document.getElementById('contactFormBox').innerHTML=
+    '<div class="success-view"><div class="success-anim">✅</div><h3>Inquiry Sent!</h3><p>Thanks for reaching out! A staff member will review your message soon.</p></div>';
+}
+
+// ======================== CHATBOT ========================
+function getBot(input){
+  const l=input.toLowerCase().trim();
+  for(const[k,v]of Object.entries(BOT_KB))if(l.includes(k))return v;
+  if(l.includes('how are you'))return"😊 I'm doing great! Ready to help you join Los Santos.";
+  if(l.includes('what can you do'))return"🤖 I can answer questions about NDRP whitelisting, rules, IP, and Discord. Type 'help'!";
+  return"🤔 Not sure about that. Try:\n\n• 'whitelist' — how to join\n• 'discord' — link to server\n• 'rules' — server rules\n• 'ip' — server IP\n• 'help' — all options";
+}
+function buildChatQuickBtns(){
+  const el=document.getElementById('chatQuickEl');
+  ['Whitelist','Discord','Rules','IP','EMS','Help'].forEach(q=>{
+    const b=document.createElement('button');b.className='chat-quick-btn';b.textContent=q;
+    b.onclick=()=>{document.getElementById('chatInputEl').value=q;sendChatMsg()};
+    el.appendChild(b);
+  });
+}
+function toggleChat(){chatIsOpen=!chatIsOpen;
+  document.getElementById('chatPanel').classList.toggle('open',chatIsOpen);
+  document.getElementById('fabIcon').textContent=chatIsOpen?'✕':'💬';
+  document.getElementById('chatNotifDot').style.display=chatIsOpen?'none':'block';
+  if(chatIsOpen)document.getElementById('chatInputEl').focus();
+}
+function openChat(){if(!chatIsOpen)toggleChat()}
+function sendChatMsg(){
+  const inp=document.getElementById('chatInputEl'),txt=inp.value.trim();if(!txt)return;
+  chatMsgs.push({id:Date.now(),text:txt,sender:'user',time:new Date()});inp.value='';
+  renderChatMessages();showTyping();
+  setTimeout(()=>{hideTyping();
+    chatMsgs.push({id:Date.now()+1,text:getBot(txt),sender:'bot',time:new Date()});
+    renderChatMessages();
+  },600+Math.random()*1000);
+}
+function renderChatMessages(){
+  const el=document.getElementById('chatMessagesEl');
+  el.innerHTML=chatMsgs.map(m=>`<div class="chat-bubble ${m.sender}"><div class="chat-bubble-inner">${m.text}<div class="bubble-time">${m.time.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</div></div></div>`).join('');
+  el.scrollTop=el.scrollHeight;
+}
+function showTyping(){
+  const el=document.getElementById('chatMessagesEl');
+  const d=document.createElement('div');d.id='typingEl';d.className='chat-bubble bot';
+  d.innerHTML='<div class="typing-dots"><span></span><span></span><span></span></div>';
+  el.appendChild(d);el.scrollTop=el.scrollHeight;
+}
+function hideTyping(){const e=document.getElementById('typingEl');if(e)e.remove()}
+</script>
+</body>
+</html>'''
+
+class Handler(SimpleHTTPRequestHandler):
+    def do_GET(self):
+        if self.path == '/':
+            self.send_response(200)
+            self.send_header('Content-type', 'text/html; charset=utf-8')
+            self.end_headers()
+            self.wfile.write(HTML_PAGE.encode('utf-8'))
+        else:
+            super().do_GET()
+
+def run(server_class=HTTPServer, handler_class=Handler, port=8000):
+    server_address = ('', port)
+    httpd = server_class(server_address, handler_class)
+    print(f"Starting NDRP Website server on port {port}...")
+    print(f"Open http://localhost:{port} in your browser.")
+    try:
+        httpd.serve_forever()
+    except KeyboardInterrupt:
+        print("\nShutting down server.")
+        httpd.server_close()
+
+if __name__ == '__main__':
+    run()
